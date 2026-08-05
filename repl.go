@@ -61,6 +61,16 @@ var commands = map[string]cliCommand{
 		description: "Attempts to catch pokemon",
 		callback:    catch,
 	},
+	"inspect": {
+		name:        "inspect",
+		description: "Displays info about pokemon",
+		callback:    inspect,
+	},
+	"pokedex": {
+		name:        "pokedex",
+		description: "Returns a list of all captured pokemon",
+		callback:    pokedex,
+	},
 }
 
 func start() {
@@ -70,6 +80,10 @@ func start() {
 	for {
 		fmt.Print("Pokedex > ")
 		scanner.Scan()
+
+		if err := scanner.Err(); err != nil {
+			fmt.Println("Error reading input:", err)
+		}
 
 		words := cleanInput(scanner.Text())
 		if len(words) == 0 {
@@ -207,5 +221,39 @@ func catch(m *config, name ...string) error {
 		fmt.Printf("%s escaped!\n", name[0])
 	}
 
+	return nil
+}
+
+func inspect(m *config, name ...string) error {
+
+	pokemon, exists := m.pokeapiClient.Pokedex[name[0]]
+
+	if !exists {
+		fmt.Println("You have not caugth this pokemon yet!")
+		return nil
+	}
+	fmt.Println("Name:", pokemon.Name)
+	fmt.Println("Height:", pokemon.Height)
+	fmt.Println("Weight:", pokemon.Weight)
+	fmt.Println("Stats:")
+	for _, s := range pokemon.Stats {
+		fmt.Printf("%s: %d\n", s.Stat.Name, s.BaseStat)
+	}
+	fmt.Println("Types:")
+	for _, t := range pokemon.Types {
+		fmt.Println(t.Type.Name)
+	}
+	return nil
+
+}
+
+func pokedex(m *config, name ...string) error {
+	if len(m.pokeapiClient.Pokedex) == 0 {
+		fmt.Println("You have not caught any pokemon yet!")
+		return nil
+	}
+	for _, p := range m.pokeapiClient.Pokedex {
+		fmt.Println(p.Name)
+	}
 	return nil
 }
